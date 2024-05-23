@@ -28,7 +28,9 @@
     </style>
 </head>
 <body>
-    <h1>Teacher Management System</h1>
+    <br>
+    <br>
+    <br>
     <a href="list">教師情報</a>
     <a href="new">教師情報登録</a>
 </body>

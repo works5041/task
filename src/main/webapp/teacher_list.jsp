@@ -54,14 +54,24 @@
             background-color: #0056b3;
         }
     </style>
+    <script>
+    function validateForm() {
+        var teacherId = document.getElementsByName('id')[0].value;
+        if (teacherId.length > 5 || isNaN(teacherId)) {
+            alert("教師番号は最大５桁の整数でなければなりません。");
+            return false;
+        }
+        return true;
+    }
+    </script>
 </head>
 <body>
 
 <h1>教師情報</h1>
 
-<form action="/search" method="get" accept-charset="UTF-8">
+<form action="/search" method="get" accept-charset="UTF-8" onsubmit="return validateForm()">
     教師番号: <input type="number" name="id">
-    教師名: <input type="text" name="name">
+    名前: <input type="text" name="name">
     コース:
     <select name="course">
         <option value="">コースを選択</option>
@@ -74,11 +84,11 @@
     <input type="submit" value="検索">
 </form>
 
-<a href="/new">新規登録</a>
+<!-- <a href="/new">新規登録</a> -->
 
 <table border="1">
     <tr>
-        <th>ID</th>
+        <th>教師番号</th>
         <th>名前</th>
         <th>年齢</th>
         <th>性別</th>
@@ -97,8 +107,8 @@
         <td><%= teacher.getSex() %></td>
         <td><%= teacher.getCourse() %></td>
         <td>
-            <a href="edit?id=<%= teacher.getId() %>">編集</a>
-            <a href="delete?id=<%= teacher.getId() %>">削除</a>
+            <a href="edit?id=<%= teacher.getId() %>">更新</a>
+            <!-- <a href="delete?id=<%= teacher.getId() %>">削除</a> -->
         </td>
     </tr>
     <%

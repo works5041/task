@@ -29,6 +29,6 @@
 </head>
 <body>
     <h1>操作が成功しました。</h1>
-    <a href="index.jsp">トップページに戻る</a>
+    <a href="list">教師情報に戻る</a>
 </body>
 </html>
