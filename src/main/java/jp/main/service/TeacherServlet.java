@@ -119,9 +119,16 @@ public class TeacherServlet extends HttpServlet {
         teacher.setCourse(course);
 
         teacherDAO.updateTeacher(teacher);
-        response.sendRedirect("list");
-    }
+        boolean isUpdated = teacherDAO.updateTeacher(teacher);
 
+        if (isUpdated) {
+            // 更新が成功した場合、成功ページにリダイレクト
+            response.sendRedirect("teacher_success.jsp");
+        } else {
+            // 更新が失敗した場合、エラーページにリダイレクト
+            response.sendRedirect("teacher_error.jsp");
+    }
+}
 
     private void deleteTeacher(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
