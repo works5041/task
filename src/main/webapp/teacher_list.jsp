@@ -2,14 +2,56 @@
 <%@ page import="java.util.List" %>
 <%@ page import="jp.main.model.Teacher" %>
 <!DOCTYPE html>
-<html>
+<html lang="ja"> <!-- 言語属性を追加 -->
 <head>
     <meta charset="UTF-8">
     <title>教師情報</title>
     <style type="text/css">
-        table, th, td {
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 20px;
+        }
+        table {
+            margin: 0 auto;
+            border-collapse: collapse;
+        }
+        th, td {
             border: 1px solid black;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            margin: 20px auto;
+            text-align: center;
+        }
+        input[type="text"], input[type="number"], select {
             padding: 5px;
+            margin-right: 10px;
+        }
+        input[type="submit"] {
+            padding: 5px 10px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
+            border-radius: 3px;
+        }
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        a {
+            display: inline-block;
+            margin: 10px 20px;
+            padding: 10px 20px;
+            color: #fff;
+            background-color: #007BFF;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        a:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
