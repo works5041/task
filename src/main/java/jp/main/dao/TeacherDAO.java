@@ -127,7 +127,7 @@ public class TeacherDAO {
             sql.append(" AND id = ?");
         }
         if (name != null && !name.trim().isEmpty()) {
-            sql.append(" AND name LIKE ?");
+            sql.append(" AND name = ?");
         }
         if (course != null && !course.trim().isEmpty()) {
             sql.append(" AND course = ?");
@@ -142,7 +142,7 @@ public class TeacherDAO {
                 preparedStatement.setInt(parameterIndex++, id);
             }
             if (name != null && !name.trim().isEmpty()) {
-                preparedStatement.setString(parameterIndex++, "%" + name.trim() + "%");
+                preparedStatement.setString(parameterIndex++, name.trim());
             }
             if (course != null && !course.trim().isEmpty()) {
                 preparedStatement.setString(parameterIndex++, course);
@@ -171,7 +171,6 @@ public class TeacherDAO {
         }
         return teachers;
     }
-
 
     private void printSQLException(SQLException ex) {
         for (Throwable e : ex) {

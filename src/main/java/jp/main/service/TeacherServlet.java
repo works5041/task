@@ -144,8 +144,6 @@ public class TeacherServlet extends HttpServlet {
         String course = request.getParameter("course");
         Integer id = idStr != null && !idStr.isEmpty() ? Integer.parseInt(idStr) : null;
 
-        System.out.println("Search Parameters: id=" + id + ", name=" + name + ", course=" + course);
-
         List<Teacher> listTeacher = teacherDAO.searchTeachers(id, name, course);
         request.setAttribute("listTeacher", listTeacher);
         RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_list.jsp");

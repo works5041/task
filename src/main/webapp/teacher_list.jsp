@@ -2,7 +2,7 @@
 <%@ page import="java.util.List" %>
 <%@ page import="jp.main.model.Teacher" %>
 <!DOCTYPE html>
-<html lang="ja"> <!-- 言語属性を追加 -->
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <title>教師情報</title>
@@ -97,7 +97,7 @@
     </tr>
     <%
         List<Teacher> listTeacher = (List<Teacher>) request.getAttribute("listTeacher");
-        if (listTeacher != null) {
+        if (listTeacher != null && !listTeacher.isEmpty()) {
             for (Teacher teacher : listTeacher) {
     %>
     <tr>
@@ -113,6 +113,12 @@
     </tr>
     <%
             }
+        } else {
+    %>
+    <tr>
+        <td colspan="6">該当するデータがありません</td>
+    </tr>
+    <%
         }
     %>
 </table>
