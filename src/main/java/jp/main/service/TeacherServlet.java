@@ -70,6 +70,9 @@ public class TeacherServlet extends HttpServlet {
                 case "/search":
                     searchTeacher(request, response, id, name, course);
                     break;
+                case "/checkId":
+                    checkTeacherId(request, response);
+                    break;
                 default:
                     listTeacher(request, response);
                     break;
@@ -77,6 +80,15 @@ public class TeacherServlet extends HttpServlet {
         } catch (SQLException ex) {
             throw new ServletException(ex);
         }
+    }
+
+    private void checkTeacherId(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+        int tid = Integer.parseInt(request.getParameter("tid"));
+        boolean exists = teacherDAO.existsTeacher(tid);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"exists\": " + exists + "}");
     }
 
     private void searchTeacher(HttpServletRequest request, HttpServletResponse response, String idStr, String name, String course)
@@ -128,14 +140,8 @@ public class TeacherServlet extends HttpServlet {
         newTeacher.setAge(age);
         newTeacher.setSex(sex);
         newTeacher.setCourse(course);
-
-        boolean isInserted = teacherDAO.insertTeacher(newTeacher);
-
-        if (isInserted) {
-            response.sendRedirect("teacher_registersuccess.jsp");
-        } else {
-            response.sendRedirect("teacher_registererror.jsp");
-        }
+        teacherDAO.insertTeacher(newTeacher);
+        response.sendRedirect("list");
     }
 
     private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
@@ -153,13 +159,8 @@ public class TeacherServlet extends HttpServlet {
         teacher.setSex(sex);
         teacher.setCourse(course);
 
-        boolean isUpdated = teacherDAO.updateTeacher(teacher);
-
-        if (isUpdated) {
-            response.sendRedirect("teacher_updatesuccess.jsp");
-        } else {
-            response.sendRedirect("teacher_updateerror.jsp");
-        }
+        teacherDAO.updateTeacher(teacher);
+        response.sendRedirect("list");
     }
 
     private void deleteTeacher(HttpServletRequest request, HttpServletResponse response)

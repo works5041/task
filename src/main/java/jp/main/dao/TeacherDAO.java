@@ -1,6 +1,7 @@
 package jp.main.dao;
 
 import jp.main.model.Teacher;
+import jp.main.base.DbUtil;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -17,6 +18,12 @@ public class TeacherDAO {
     private static final String DELETE_TEACHERS_SQL = "DELETE FROM teachers WHERE id = ?";
     private static final String UPDATE_TEACHERS_SQL = "UPDATE teachers SET name = ?, age = ?, sex = ?, course = ? WHERE id = ?";
 
+    private final Connection connection;
+
+    public TeacherDAO() {
+        connection = DbUtil.getConnection();
+    }
+
     protected Connection getConnection() {
         Connection connection = null;
         try {
@@ -28,21 +35,35 @@ public class TeacherDAO {
         return connection;
     }
 
-    public boolean insertTeacher(Teacher teacher) throws SQLException {
-        String sql = "INSERT INTO teachers (name, age, sex, course) VALUES (?, ?, ?, ?)";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setString(1, teacher.getName());
-            preparedStatement.setInt(2, teacher.getAge());
-            preparedStatement.setString(3, teacher.getSex());
-            preparedStatement.setString(4, teacher.getCourse());
-            int rowsInserted = preparedStatement.executeUpdate();
-            return rowsInserted > 0;
+    public boolean existsTeacher(int tid) {
+        boolean exists = false;
+        try {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("SELECT 1 FROM teachers WHERE id = ?");
+            preparedStatement.setInt(1, tid);
+            ResultSet rs = preparedStatement.executeQuery();
+            exists = rs.next();
         } catch (SQLException e) {
-            printSQLException(e);
-            return false;
+            e.printStackTrace();
+        }
+        return exists;
+    }
+
+    public void insertTeacher(Teacher teacher) {
+        try {
+            PreparedStatement preparedStatement = connection
+                    .prepareStatement("INSERT INTO teachers (id, name, age, sex, course) VALUES (?, ?, ?, ?, ?)");
+            preparedStatement.setInt(1, teacher.getId());
+            preparedStatement.setString(2, teacher.getName());
+            preparedStatement.setInt(3, teacher.getAge());
+            preparedStatement.setString(4, teacher.getSex());
+            preparedStatement.setString(5, teacher.getCourse());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
+
 
     public Teacher selectTeacher(int id) {
         Teacher teacher = null;
@@ -174,6 +195,22 @@ public class TeacherDAO {
         }
         return teachers;
     }
+
+    public boolean teacherExists(int id) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM teachers WHERE id = ?";
+        try (Connection connection = getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setInt(1, id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            printSQLException(e);
+        }
+        return false;
+    }
+
 
     private void printSQLException(SQLException ex) {
         for (Throwable e : ex) {
