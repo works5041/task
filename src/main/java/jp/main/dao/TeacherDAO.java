@@ -28,17 +28,19 @@ public class TeacherDAO {
         return connection;
     }
 
-    public void insertTeacher(Teacher teacher) throws SQLException {
+    public boolean insertTeacher(Teacher teacher) throws SQLException {
+        String sql = "INSERT INTO teachers (name, age, sex, course) VALUES (?, ?, ?, ?)";
         try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TEACHERS_SQL)) {
-            preparedStatement.setInt(1, teacher.getId());
-            preparedStatement.setString(2, teacher.getName());
-            preparedStatement.setInt(3, teacher.getAge());
-            preparedStatement.setString(4, teacher.getSex());
-            preparedStatement.setString(5, teacher.getCourse());
-            preparedStatement.executeUpdate();
+             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+            preparedStatement.setString(1, teacher.getName());
+            preparedStatement.setInt(2, teacher.getAge());
+            preparedStatement.setString(3, teacher.getSex());
+            preparedStatement.setString(4, teacher.getCourse());
+            int rowsInserted = preparedStatement.executeUpdate();
+            return rowsInserted > 0;
         } catch (SQLException e) {
             printSQLException(e);
+            return false;
         }
     }
 
@@ -118,6 +120,7 @@ public class TeacherDAO {
         return rowUpdated;
     }
 
+// TeacherDAO.java
 
     public List<Teacher> searchTeachers(Integer id, String name, String course) {
         List<Teacher> teachers = new ArrayList<>();

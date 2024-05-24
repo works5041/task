@@ -5,8 +5,21 @@
 <head>
     <meta charset="UTF-8">
     <title>教師情報更新</title>
+    <style>
+        /* コンテナのスタイル */
+        .container {
+            width: 60%; /* コンテナの幅を適切なサイズに設定 */
+            margin: 0 auto; /* 左右のマージンを自動で設定して中央に揃える */
+            text-align: center; /* テキストを中央揃えにする */
+        }
+        /* 各要素のスタイル */
+        h1, h2, p, form {
+            margin: 20px 0; /* 各要素の上下のマージンを設定 */
+        }
+    </style>
 </head>
 <body>
+    <div class="container"> <!-- コンテナを作成 -->
     <h1>教師情報更新</h1>
     <form action="teacherUpdateConfirm.jsp" method="post" accept-charset="UTF-8"> <!-- 追加 -->
         <h2>教師番号</h2>
@@ -29,6 +42,7 @@
         </select>
         <br><br>
         <input type="submit" value="更新" /> <input type="reset" value="リセット" />
-    </form>
-</body>
-</html>
+                </form>
+            </div>
+        </body>
+        </html>

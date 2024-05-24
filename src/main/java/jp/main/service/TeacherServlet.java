@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -22,8 +23,7 @@ public class TeacherServlet extends HttpServlet {
         teacherDAO = new TeacherDAO();
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         doGet(request, response);
@@ -31,9 +31,24 @@ public class TeacherServlet extends HttpServlet {
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        request.setCharacterEncoding("UTF-8"); // リクエストのエンコーディングを設定
-        response.setCharacterEncoding("UTF-8"); // レスポンスのエンコーディングを設定
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
         String action = request.getServletPath();
+
+        String id = request.getParameter("id");
+        String name = request.getParameter("name");
+        String course = request.getParameter("course");
+
+        if (name != null) {
+            name = URLDecoder.decode(name, "UTF-8");
+        }
+        if (course != null) {
+            course = URLDecoder.decode(course, "UTF-8");
+        }
+
+        System.out.println("Received parameter 'id': " + id);
+        System.out.println("Received parameter 'name': " + name);
+        System.out.println("Received parameter 'course': " + course);
 
         try {
             switch (action) {
@@ -53,7 +68,7 @@ public class TeacherServlet extends HttpServlet {
                     updateTeacher(request, response);
                     break;
                 case "/search":
-                    searchTeacher(request, response);
+                    searchTeacher(request, response, id, name, course);
                     break;
                 default:
                     listTeacher(request, response);
@@ -64,6 +79,20 @@ public class TeacherServlet extends HttpServlet {
         }
     }
 
+    private void searchTeacher(HttpServletRequest request, HttpServletResponse response, String idStr, String name, String course)
+            throws SQLException, IOException, ServletException {
+        Integer id = idStr != null && !idStr.isEmpty() ? Integer.parseInt(idStr) : null;
+
+        List<Teacher> listTeacher = teacherDAO.searchTeachers(id, name, course);
+        request.setAttribute("listTeacher", listTeacher);
+
+        if (listTeacher.isEmpty()) {
+            request.setAttribute("message", "該当するデータがありません");
+        }
+
+        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_list.jsp");
+        dispatcher.forward(request, response);
+    }
 
     private void listTeacher(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException, ServletException {
@@ -99,13 +128,19 @@ public class TeacherServlet extends HttpServlet {
         newTeacher.setAge(age);
         newTeacher.setSex(sex);
         newTeacher.setCourse(course);
-        teacherDAO.insertTeacher(newTeacher);
-        response.sendRedirect("list");
+
+        boolean isInserted = teacherDAO.insertTeacher(newTeacher);
+
+        if (isInserted) {
+            response.sendRedirect("teacher_registersuccess.jsp");
+        } else {
+            response.sendRedirect("teacher_registererror.jsp");
+        }
     }
 
     private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
-        int id = Integer.parseInt(request.getParameter("id")); // This line is likely causing the issue
+        int id = Integer.parseInt(request.getParameter("id"));
         String name = request.getParameter("name");
         int age = Integer.parseInt(request.getParameter("age"));
         String sex = request.getParameter("sex");
@@ -118,35 +153,19 @@ public class TeacherServlet extends HttpServlet {
         teacher.setSex(sex);
         teacher.setCourse(course);
 
-        teacherDAO.updateTeacher(teacher);
         boolean isUpdated = teacherDAO.updateTeacher(teacher);
 
         if (isUpdated) {
-            // 更新が成功した場合、成功ページにリダイレクト
-            response.sendRedirect("teacher_success.jsp");
+            response.sendRedirect("teacher_updatesuccess.jsp");
         } else {
-            // 更新が失敗した場合、エラーページにリダイレクト
-            response.sendRedirect("teacher_error.jsp");
+            response.sendRedirect("teacher_updateerror.jsp");
+        }
     }
-}
 
     private void deleteTeacher(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
         int id = Integer.parseInt(request.getParameter("id"));
         teacherDAO.deleteTeacher(id);
         response.sendRedirect("list");
-    }
-
-    private void searchTeacher(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException, ServletException {
-        String idStr = request.getParameter("id");
-        String name = request.getParameter("name");
-        String course = request.getParameter("course");
-        Integer id = idStr != null && !idStr.isEmpty() ? Integer.parseInt(idStr) : null;
-
-        List<Teacher> listTeacher = teacherDAO.searchTeachers(id, name, course);
-        request.setAttribute("listTeacher", listTeacher);
-        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_list.jsp");
-        dispatcher.forward(request, response);
     }
 }

@@ -4,7 +4,7 @@ import java.sql.*;
 
 public class JdbcTest {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/tsm";
+    private static final String URL = "jdbc:mysql://localhost:3306/tsm?useUnicode=true&characterEncoding=UTF-8";
     private static final String USERNAME = "root";
     private static final String PASSWORD = "5041";
 
@@ -22,27 +22,23 @@ public class JdbcTest {
     }
 
     //  SQL実行
-    public static ResultSet executeQuery(String sql, String name) throws SQLException {
+    public static ResultSet executeQuery(String sql, String param) throws SQLException {
         Connection connection = null;
         try {
             connection = JdbcTest.getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setString(1, name);
-            return preparedStatement.executeQuery();
-        } catch (SQLException we) {
-            throw we;
-        }
-    }
+            preparedStatement.setString(1, param);
 
-    public static ResultSet executeQuery(String sql) throws SQLException {
-        Connection connection = null;
-        try {
-            connection = JdbcTest.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-//            preparedStatement.setString(1, name);
+            // ログの出力
+            System.out.println("Executing SQL: " + preparedStatement.toString());
+
             return preparedStatement.executeQuery();
         } catch (SQLException we) {
             throw we;
+        } finally {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
         }
     }
 

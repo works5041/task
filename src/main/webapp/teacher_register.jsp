@@ -40,7 +40,7 @@
 </head>
 <body>
     <h1>教師情報登録</h1>
-    <form action="insert" method="post">
+    <form action="insert" method="post" accept-charset="UTF-8">
         <h2>教師番号</h2>
         <input type="number" name="tid" required><br>
         <h2>名前</h2>
