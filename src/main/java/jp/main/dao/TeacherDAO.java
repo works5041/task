@@ -1,45 +1,24 @@
 package jp.main.dao;
 
 import jp.main.model.Teacher;
-import jp.main.base.DbUtil;
+import jp.main.base.JdbcTest;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TeacherDAO {
-    private String jdbcURL = "jdbc:mysql://localhost:3306/tsm";
-    private String jdbcUsername = "root";
-    private String jdbcPassword = "5041";
-
     private static final String INSERT_TEACHERS_SQL = "INSERT INTO teachers (id, name, age, sex, course) VALUES (?, ?, ?, ?, ?)";
     private static final String SELECT_TEACHER_BY_ID = "SELECT id, name, age, sex, course FROM teachers WHERE id = ?";
     private static final String SELECT_ALL_TEACHERS = "SELECT * FROM teachers";
     private static final String DELETE_TEACHERS_SQL = "DELETE FROM teachers WHERE id = ?";
     private static final String UPDATE_TEACHERS_SQL = "UPDATE teachers SET name = ?, age = ?, sex = ?, course = ? WHERE id = ?";
 
-    private final Connection connection;
-
-    public TeacherDAO() {
-        connection = DbUtil.getConnection();
-    }
-
-    protected Connection getConnection() {
-        Connection connection = null;
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(jdbcURL, jdbcUsername, jdbcPassword);
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-        return connection;
-    }
-
     public boolean existsTeacher(int tid) {
         boolean exists = false;
         try {
-            PreparedStatement preparedStatement = connection
-                    .prepareStatement("SELECT 1 FROM teachers WHERE id = ?");
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement("SELECT 1 FROM teachers WHERE id = ?");
             preparedStatement.setInt(1, tid);
             ResultSet rs = preparedStatement.executeQuery();
             exists = rs.next();
@@ -49,26 +28,35 @@ public class TeacherDAO {
         return exists;
     }
 
-    public void insertTeacher(Teacher teacher) {
+    public boolean insertTeacher(Teacher teacher) {
+        boolean rowInserted = false;
         try {
-            PreparedStatement preparedStatement = connection
-                    .prepareStatement("INSERT INTO teachers (id, name, age, sex, course) VALUES (?, ?, ?, ?, ?)");
-            preparedStatement.setInt(1, teacher.getId());
-            preparedStatement.setString(2, teacher.getName());
-            preparedStatement.setInt(3, teacher.getAge());
-            preparedStatement.setString(4, teacher.getSex());
-            preparedStatement.setString(5, teacher.getCourse());
-            preparedStatement.executeUpdate();
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement statement = connection.prepareStatement(INSERT_TEACHERS_SQL);
+            statement.setInt(1, teacher.getId());
+            statement.setString(2, teacher.getName());
+            statement.setInt(3, teacher.getAge());
+            statement.setString(4, teacher.getSex());
+            statement.setString(5, teacher.getCourse());
+
+            // executeUpdate()メソッドが1以上を返す場合、挿入成功と判定
+            rowInserted = statement.executeUpdate() > 0;
+
+            // ステートメントと接続をクローズ
+            statement.close();
+            connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+        // 挿入の成否を返す
+        return rowInserted;
     }
-
 
     public Teacher selectTeacher(int id) {
         Teacher teacher = null;
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TEACHER_BY_ID)) {
+        try {
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TEACHER_BY_ID);
             preparedStatement.setInt(1, id);
             ResultSet rs = preparedStatement.executeQuery();
 
@@ -85,15 +73,16 @@ public class TeacherDAO {
                 teacher.setCourse(course);
             }
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return teacher;
     }
 
     public List<Teacher> selectAllTeachers() {
         List<Teacher> teachers = new ArrayList<>();
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_TEACHERS)) {
+        try {
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_TEACHERS);
             ResultSet rs = preparedStatement.executeQuery();
 
             while (rs.next()) {
@@ -111,37 +100,40 @@ public class TeacherDAO {
                 teachers.add(teacher);
             }
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return teachers;
     }
 
-    public boolean deleteTeacher(int id) throws SQLException {
-        boolean rowDeleted;
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(DELETE_TEACHERS_SQL)) {
+    public boolean deleteTeacher(int id) {
+        boolean rowDeleted = false;
+        try {
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement statement = connection.prepareStatement(DELETE_TEACHERS_SQL);
             statement.setInt(1, id);
             rowDeleted = statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return rowDeleted;
     }
 
-    public boolean updateTeacher(Teacher teacher) throws SQLException {
-        boolean rowUpdated;
-        try (Connection connection = getConnection();
-             PreparedStatement statement = connection.prepareStatement(UPDATE_TEACHERS_SQL)) {
+    public boolean updateTeacher(Teacher teacher) {
+        boolean rowUpdated = false;
+        try {
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement statement = connection.prepareStatement(UPDATE_TEACHERS_SQL);
             statement.setString(1, teacher.getName());
             statement.setInt(2, teacher.getAge());
             statement.setString(3, teacher.getSex());
             statement.setString(4, teacher.getCourse());
-            statement.setInt(5, teacher.getId()); // Set the ID parameter as the last parameter
-
+            statement.setInt(5, teacher.getId());
             rowUpdated = statement.executeUpdate() > 0;
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
         return rowUpdated;
     }
-
-// TeacherDAO.java
 
     public List<Teacher> searchTeachers(Integer id, String name, String course) {
         List<Teacher> teachers = new ArrayList<>();
@@ -157,10 +149,9 @@ public class TeacherDAO {
             sql.append(" AND course = ?");
         }
 
-        System.out.println("Generated SQL: " + sql.toString());
-
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql.toString())) {
+        try {
+            Connection connection = JdbcTest.getConnection();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql.toString());
             int parameterIndex = 1;
             if (id != null) {
                 preparedStatement.setInt(parameterIndex++, id);
@@ -171,8 +162,6 @@ public class TeacherDAO {
             if (course != null && !course.trim().isEmpty()) {
                 preparedStatement.setString(parameterIndex++, course);
             }
-
-            System.out.println("SQL Parameters: id=" + id + ", name=" + name + ", course=" + course);
 
             ResultSet rs = preparedStatement.executeQuery();
 
@@ -191,40 +180,8 @@ public class TeacherDAO {
                 teachers.add(teacher);
             }
         } catch (SQLException e) {
-            printSQLException(e);
+            e.printStackTrace();
         }
         return teachers;
-    }
-
-    public boolean teacherExists(int id) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM teachers WHERE id = ?";
-        try (Connection connection = getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-            preparedStatement.setInt(1, id);
-            ResultSet resultSet = preparedStatement.executeQuery();
-            if (resultSet.next()) {
-                return resultSet.getInt(1) > 0;
-            }
-        } catch (SQLException e) {
-            printSQLException(e);
-        }
-        return false;
-    }
-
-
-    private void printSQLException(SQLException ex) {
-        for (Throwable e : ex) {
-            if (e instanceof SQLException) {
-                e.printStackTrace(System.err);
-                System.err.println("SQLState: " + ((SQLException) e).getSQLState());
-                System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
-                System.err.println("Message: " + e.getMessage());
-                Throwable t = ex.getCause();
-                while (t != null) {
-                    System.out.println("Cause: " + t);
-                    t = t.getCause();
-                }
-            }
-        }
     }
 }

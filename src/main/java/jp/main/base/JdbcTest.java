@@ -13,10 +13,8 @@ public class JdbcTest {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             // データベースに対する処理
-//            System.out.println("データベースに接続に成功");
             return DriverManager.getConnection(URL, USERNAME, PASSWORD);
         } catch (ClassNotFoundException e) {
-//            System.out.println("データベースに接続に失敗");
             throw new SQLException("Database driver not found", e);
         }
     }
@@ -25,7 +23,7 @@ public class JdbcTest {
     public static ResultSet executeQuery(String sql, String param) throws SQLException {
         Connection connection = null;
         try {
-            connection = JdbcTest.getConnection();
+            connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setString(1, param);
 
@@ -33,8 +31,6 @@ public class JdbcTest {
             System.out.println("Executing SQL: " + preparedStatement.toString());
 
             return preparedStatement.executeQuery();
-        } catch (SQLException we) {
-            throw we;
         } finally {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
@@ -46,13 +42,15 @@ public class JdbcTest {
     public static ResultSet executeQuery(String sql, String sclass, String name) throws SQLException {
         Connection connection = null;
         try {
-            connection = JdbcTest.getConnection();
+            connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setString(1, sclass);
             preparedStatement.setString(2, name);
             return preparedStatement.executeQuery();
-        } catch (SQLException we) {
-            throw we;
+        } finally {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
         }
     }
 
@@ -60,13 +58,15 @@ public class JdbcTest {
     public static void executeUpdate(String sql, int id, String name) throws SQLException {
         Connection connection = null;
         try {
-            connection = JdbcTest.getConnection();
+            connection = getConnection();
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             preparedStatement.setInt(1, id);
             preparedStatement.setString(2, name);
             preparedStatement.executeUpdate();
-        } catch (SQLException we) {
-            throw we;
+        } finally {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
         }
     }
 

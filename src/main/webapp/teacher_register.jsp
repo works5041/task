@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja"> <!-- 言語属性を追加 -->
 <head>
     <meta charset="UTF-8">
     <title>教師情報登録</title>
@@ -36,62 +36,11 @@
         input[type="submit"]:hover, input[type="reset"]:hover {
             background-color: #0056b3;
         }
-        .error {
-            color: red;
-        }
     </style>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            function checkTeacherId(tid) {
-                return $.ajax({
-                    url: "TeacherServlet?action=checkId",
-                    type: "GET",
-                    data: { tid: tid },
-                    dataType: "json"
-                });
-            }
-
-            $("form").on("submit", function(event) {
-                event.preventDefault();
-                var form = this;
-                var valid = true;
-                $("input[required]").each(function() {
-                    if ($(this).val() === "") {
-                        valid = false;
-                        $(this).next(".error").remove();
-                        $(this).after("<span class='error'>このフィールドは必須です。</span>");
-                    } else {
-                        $(this).next(".error").remove();
-                    }
-                });
-
-                if (valid) {
-                    var tid = $("input[name='tid']").val();
-                    checkTeacherId(tid).done(function(data) {
-                        if (data.exists) {
-                            alert("この教師番号は既に存在します。");
-                        } else {
-                            form.submit();
-                        }
-                    });
-                }
-            });
-
-            $("input[name='tid']").on("blur", function() {
-                var tid = $(this).val();
-                checkTeacherId(tid).done(function(data) {
-                    if (data.exists) {
-                        alert("この教師番号は既に存在します。");
-                    }
-                });
-            });
-        });
-    </script>
 </head>
 <body>
     <h1>教師情報登録</h1>
-    <form action="insert" method="post" accept-charset="UTF-8">
+    <form action="insert" method="post">
         <h2>教師番号</h2>
         <input type="number" name="tid" required><br>
         <h2>名前</h2>

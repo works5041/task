@@ -14,6 +14,9 @@ import java.net.URLDecoder;
 import java.sql.SQLException;
 import java.util.List;
 
+import java.net.URLDecoder;
+
+
 @WebServlet("/")
 public class TeacherServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
@@ -131,17 +134,36 @@ public class TeacherServlet extends HttpServlet {
 
     private void insertTeacher(HttpServletRequest request, HttpServletResponse response)
             throws SQLException, IOException {
+        // フォームからのデータを取得
+        String id = request.getParameter("tid");
         String name = request.getParameter("name");
-        int age = Integer.parseInt(request.getParameter("age"));
+        String age = request.getParameter("age");
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
+
+        // 取得したデータをコンソールに出力して確認
+        System.out.println("Received parameter 'id': " + id);
+        System.out.println("Received parameter 'name': " + name);
+        System.out.println("Received parameter 'age': " + age);
+        System.out.println("Received parameter 'sex': " + sex);
+        System.out.println("Received parameter 'course': " + course);
+
         Teacher newTeacher = new Teacher();
+
+        newTeacher.setId(Integer.parseInt(id));
         newTeacher.setName(name);
-        newTeacher.setAge(age);
+        newTeacher.setAge(Integer.parseInt(age));
         newTeacher.setSex(sex);
         newTeacher.setCourse(course);
-        teacherDAO.insertTeacher(newTeacher);
-        response.sendRedirect("list");
+
+        // 教師の登録処理を実行し、結果に応じて適切なリダイレクト先に遷移する
+        if (teacherDAO.insertTeacher(newTeacher)) {
+            // 正常に登録された場合は成功ページにリダイレクト
+            response.sendRedirect("teacher_registersuccess.jsp");
+        } else {
+            // 登録に失敗した場合はエラーページにリダイレクト
+            response.sendRedirect("teacher_registererror.jsp");
+        }
     }
 
     private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
