@@ -133,45 +133,65 @@ public class TeacherServlet extends HttpServlet {
         dispatcher.forward(request, response);
     }
 
-    private void insertTeacher(HttpServletRequest request, HttpServletResponse response)
-            throws SQLException, IOException, ServletException {
+    private void insertTeacher(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String name = request.getParameter("name");
         int age = Integer.parseInt(request.getParameter("age"));
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
         int tid = Integer.parseInt(request.getParameter("tid")); // 教師番号を取得
 
-        Teacher newTeacher = new Teacher();
-        newTeacher.setId(tid);
-        newTeacher.setName(name);
-        newTeacher.setAge(age);
-        newTeacher.setSex(sex);
-        newTeacher.setCourse(course);
+        Teacher newTeacher = new Teacher(tid, name, age, sex, course);
 
         // 未入力項目がある場合はエラーメッセージを表示して登録画面に戻る
         if (name.isEmpty() || sex.isEmpty() || course.isEmpty()) {
             request.setAttribute("errorMessage", "全ての項目を入力してください");
+            request.setAttribute("teacher", newTeacher);
             RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_register.jsp");
             dispatcher.forward(request, response);
             return; // メソッドを終了する
         }
 
         // 重複チェックを行う
-        boolean isDuplicate = teacherDAO.existsTeacher(tid);
+        boolean isDuplicate;
+        try {
+            isDuplicate = teacherDAO.existsTeacher(tid);
+        } catch (SQLException e) {
+            request.setAttribute("errorMessage", "教師番号のチェック中にエラーが発生しました。");
+            request.setAttribute("teacher", newTeacher);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=sql");
+            dispatcher.forward(request, response);
+            return; // メソッドを終了する
+        }
+
         if (isDuplicate) {
-            // 重複した場合はエラーメッセージを表示して登録画面に戻る
+            // 重複した場合はエラーメッセージを表示してエラー画面にフォワードする
             request.setAttribute("errorMessage", "教師番号が既に存在します。");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_register.jsp");
+            request.setAttribute("teacher", newTeacher);
+            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=duplicate");
             dispatcher.forward(request, response);
         } else {
-            // 重複しない場合は新しい教師を登録し、成功画面にフォワードする
-            teacherDAO.insertTeacher(newTeacher);
+            try {
+                // 重複しない場合は新しい教師を登録し、成功画面にフォワードする
+                teacherDAO.insertTeacher(newTeacher);
 
-            // 登録成功時の教師情報をリクエスト属性に設定
-            request.setAttribute("registeredTeacher", newTeacher);
+                // 登録成功時の教師情報をリクエスト属性に設定
+                request.setAttribute("registeredTeacher", newTeacher);
 
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
-            dispatcher.forward(request, response);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
+                dispatcher.forward(request, response);
+            } catch (SQLException e) {
+                // SQLエラーが発生した場合
+                request.setAttribute("errorMessage", "教師の挿入中にエラーが発生しました。");
+                request.setAttribute("teacher", newTeacher);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=sql");
+                dispatcher.forward(request, response);
+            } catch (Exception e) {
+                // その他のエラーが発生した場合
+                request.setAttribute("errorMessage", "予期しないエラーが発生しました。");
+                request.setAttribute("teacher", newTeacher);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=general");
+                dispatcher.forward(request, response);
+            }
         }
     }
 
@@ -182,12 +202,7 @@ public class TeacherServlet extends HttpServlet {
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
-        Teacher teacher = new Teacher();
-        teacher.setId(id);
-        teacher.setName(name);
-        teacher.setAge(age);
-        teacher.setSex(sex);
-        teacher.setCourse(course);
+        Teacher teacher = new Teacher(id, name, age, sex, course);
 
         teacherDAO.updateTeacher(teacher);
         response.sendRedirect("list");

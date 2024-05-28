@@ -14,82 +14,59 @@ public class TeacherDAO {
     private static final String DELETE_TEACHERS_SQL = "DELETE FROM teachers WHERE id = ?";
     private static final String UPDATE_TEACHERS_SQL = "UPDATE teachers SET name = ?, age = ?, sex = ?, course = ? WHERE id = ?";
 
-    // 新規追加：教師番号の重複チェックメソッド
-    public boolean existsTeacher(int id) throws SQLException {
-        boolean exists = false;
-        try (Connection connection = JdbcTest.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TEACHER_BY_ID)) {
-            preparedStatement.setInt(1, id);
-            ResultSet rs = preparedStatement.executeQuery();
-            exists = rs.next();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return exists;
-    }
-
-    public boolean insertTeacher(Teacher teacher) {
-        boolean rowInserted = false;
-        try {
-            Connection connection = JdbcTest.getConnection();
-
-            // デバッグステートメントの追加
-            System.out.println("教師番号: " + teacher.getId());
-            System.out.println("名前: " + teacher.getName());
-            // 他の属性に関する情報もログに追加できます
-
-            // 重複する教師番号が存在しないかチェック
-            if (!existsTeacher(teacher.getId())) {
-                PreparedStatement statement = connection.prepareStatement(INSERT_TEACHERS_SQL);
-                statement.setInt(1, teacher.getId());
-                statement.setString(2, teacher.getName());
-                statement.setInt(3, teacher.getAge());
-                statement.setString(4, teacher.getSex());
-                statement.setString(5, teacher.getCourse());
-
-                // executeUpdate()メソッドが1以上を返す場合、挿入成功と判定
-                rowInserted = statement.executeUpdate() > 0;
-
-                // ステートメントをクローズ
-                statement.close();
-            } else {
-                System.out.println("教師番号が既に存在します。");
-            }
-
-            connection.close();
-        } catch (SQLException e) {
-            // 例外をログに記録
-            e.printStackTrace();
-        }
-        // 挿入の成否を返す
-        return rowInserted;
-    }
-
-
-    public Teacher selectTeacher(int id) {
-        Teacher teacher = null;
-        try {
-            Connection connection = JdbcTest.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TEACHER_BY_ID);
-            preparedStatement.setInt(1, id);
-            ResultSet rs = preparedStatement.executeQuery();
-
-            while (rs.next()) {
-                String name = rs.getString("name");
-                int age = rs.getInt("age");
-                String sex = rs.getString("sex");
-                String course = rs.getString("course");
-                teacher = new Teacher();
-                teacher.setId(id);
-                teacher.setName(name);
-                teacher.setAge(age);
-                teacher.setSex(sex);
-                teacher.setCourse(course);
+    // 教師が存在するかどうかを確認するメソッド
+    public boolean existsTeacher(int tid) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM teachers WHERE id = ?";
+        try (Connection conn = JdbcTest.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, tid);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new SQLException("教師の存在チェック中にエラーが発生しました。", e);
         }
-        return teacher;
+        return false;
+    }
+
+    // 新しい教師を挿入するメソッド
+    public void insertTeacher(Teacher teacher) throws SQLException {
+        String sql = "INSERT INTO teachers (id, name, age, sex, course) VALUES (?, ?, ?, ?, ?)";
+        try (Connection conn = JdbcTest.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, teacher.getId());
+            stmt.setString(2, teacher.getName());
+            stmt.setInt(3, teacher.getAge());
+            stmt.setString(4, teacher.getSex());
+            stmt.setString(5, teacher.getCourse());
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new SQLException("教師の挿入中にエラーが発生しました。", e);
+        }
+    }
+
+    // 指定したIDの教師情報を取得するメソッド
+    public Teacher selectTeacher(int id) throws SQLException {
+        String sql = "SELECT id, name, age, sex, course FROM teachers WHERE id = ?";
+        try (Connection conn = JdbcTest.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    int teacherId = rs.getInt("id");
+                    String name = rs.getString("name");
+                    int age = rs.getInt("age");
+                    String sex = rs.getString("sex");
+                    String course = rs.getString("course");
+                    return new Teacher(teacherId, name, age, sex, course);
+                }
+            }
+        } catch (SQLException e) {
+            throw new SQLException("教師の取得中にエラーが発生しました。", e);
+        }
+        return null;
     }
 
     public List<Teacher> selectAllTeachers() {

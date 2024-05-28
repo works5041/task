@@ -8,15 +8,14 @@ public class JdbcTest {
     private static final String USERNAME = "root";
     private static final String PASSWORD = "5041";
 
-    // DB接続、コレクションを取得
+    // データベース接続を取得するメソッド
     public static Connection getConnection() throws SQLException {
         try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            // データベースに対する処理
-            return DriverManager.getConnection(URL, USERNAME, PASSWORD);
+            Class.forName("com.mysql.cj.jdbc.Driver"); // JDBCドライバの読み込み
         } catch (ClassNotFoundException e) {
-            throw new SQLException("Database driver not found", e);
+            throw new SQLException("JDBCドライバのロードに失敗しました", e);
         }
+        return DriverManager.getConnection(URL, USERNAME, PASSWORD);
     }
 
     //  SQL実行

@@ -7,6 +7,19 @@ public class Teacher {
     private String sex;
     private String course;
 
+    // 引数付きコンストラクタを追加
+    public Teacher(int id, String name, int age, String sex, String course) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.sex = sex;
+        this.course = course;
+    }
+
+    // デフォルトコンストラクタ
+    public Teacher() {
+    }
+
     // Getters and Setters
     public int getId() {
         return id;
