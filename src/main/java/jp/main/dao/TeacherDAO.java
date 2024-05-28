@@ -32,18 +32,25 @@ public class TeacherDAO {
         boolean rowInserted = false;
         try {
             Connection connection = JdbcTest.getConnection();
-            PreparedStatement statement = connection.prepareStatement(INSERT_TEACHERS_SQL);
-            statement.setInt(1, teacher.getId());
-            statement.setString(2, teacher.getName());
-            statement.setInt(3, teacher.getAge());
-            statement.setString(4, teacher.getSex());
-            statement.setString(5, teacher.getCourse());
 
-            // executeUpdate()メソッドが1以上を返す場合、挿入成功と判定
-            rowInserted = statement.executeUpdate() > 0;
+            // 重複する教師番号が存在しないかチェック
+            if (!existsTeacher(teacher.getId())) {
+                PreparedStatement statement = connection.prepareStatement(INSERT_TEACHERS_SQL);
+                statement.setInt(1, teacher.getId());
+                statement.setString(2, teacher.getName());
+                statement.setInt(3, teacher.getAge());
+                statement.setString(4, teacher.getSex());
+                statement.setString(5, teacher.getCourse());
 
-            // ステートメントと接続をクローズ
-            statement.close();
+                // executeUpdate()メソッドが1以上を返す場合、挿入成功と判定
+                rowInserted = statement.executeUpdate() > 0;
+
+                // ステートメントをクローズ
+                statement.close();
+            } else {
+                System.out.println("教師番号が既に存在します。");
+            }
+
             connection.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -51,6 +58,7 @@ public class TeacherDAO {
         // 挿入の成否を返す
         return rowInserted;
     }
+
 
     public Teacher selectTeacher(int id) {
         Teacher teacher = null;
