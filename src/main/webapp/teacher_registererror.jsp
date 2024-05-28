@@ -1,37 +1,17 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>エラー</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-        h1 {
-            color: red;
-        }
-        a {
-            display: inline-block;
-            margin: 10px 20px;
-            padding: 10px 20px;
-            color: #fff;
-            background-color: #007BFF;
-            text-decoration: none;
-            border-radius: 5px;
-        }
-        a:hover {
-            background-color: #0056b3;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error</title>
 </head>
 <body>
-    <h1>エラーが発生しました。</h1>
-    <%-- リクエスト属性から教師情報を取得して表示 --%>
-        <p>登録された教師番号: <%= request.getAttribute("teacherId") %></p>
-        <p>登録された教師名: <%= request.getAttribute("teacherName") %></p>
-    <a href="index.jsp">トップページに戻る</a>
+    <h2>Error</h2>
+    <% String errorType = request.getParameter("error");
+    if ("sql".equals(errorType)) { %>
+        <p>教師番号のチェック中にエラーが発生しました。</p>
+    <% } else if ("general".equals(errorType)) { %>
+        <p>予期しないエラーが発生しました。</p>
+    <% } %>
 </body>
 </html>

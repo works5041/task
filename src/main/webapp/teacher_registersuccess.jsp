@@ -30,8 +30,11 @@
 <body>
     <h1>操作が成功しました。</h1>
     <%-- リクエスト属性から教師情報を取得して表示 --%>
-    <p>登録された教師番号: <%= request.getAttribute("teacherId") %></p>
-    <p>登録された教師名: <%= request.getAttribute("teacherName") %></p>
+    <%
+        jp.main.model.Teacher registeredTeacher = (jp.main.model.Teacher)request.getAttribute("registeredTeacher");
+    %>
+    <p>登録された教師番号: <%= registeredTeacher.getId() %></p>
+    <p>登録された教師名: <%= registeredTeacher.getName() %></p>
     <a href="index.jsp">トップページに戻る</a>
 </body>
 </html>

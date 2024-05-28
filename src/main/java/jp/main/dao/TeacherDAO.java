@@ -14,12 +14,12 @@ public class TeacherDAO {
     private static final String DELETE_TEACHERS_SQL = "DELETE FROM teachers WHERE id = ?";
     private static final String UPDATE_TEACHERS_SQL = "UPDATE teachers SET name = ?, age = ?, sex = ?, course = ? WHERE id = ?";
 
-    public boolean existsTeacher(int tid) {
+    // 新規追加：教師番号の重複チェックメソッド
+    public boolean existsTeacher(int id) throws SQLException {
         boolean exists = false;
-        try {
-            Connection connection = JdbcTest.getConnection();
-            PreparedStatement preparedStatement = connection.prepareStatement("SELECT 1 FROM teachers WHERE id = ?");
-            preparedStatement.setInt(1, tid);
+        try (Connection connection = JdbcTest.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SELECT_TEACHER_BY_ID)) {
+            preparedStatement.setInt(1, id);
             ResultSet rs = preparedStatement.executeQuery();
             exists = rs.next();
         } catch (SQLException e) {
@@ -32,6 +32,11 @@ public class TeacherDAO {
         boolean rowInserted = false;
         try {
             Connection connection = JdbcTest.getConnection();
+
+            // デバッグステートメントの追加
+            System.out.println("教師番号: " + teacher.getId());
+            System.out.println("名前: " + teacher.getName());
+            // 他の属性に関する情報もログに追加できます
 
             // 重複する教師番号が存在しないかチェック
             if (!existsTeacher(teacher.getId())) {
@@ -53,6 +58,7 @@ public class TeacherDAO {
 
             connection.close();
         } catch (SQLException e) {
+            // 例外をログに記録
             e.printStackTrace();
         }
         // 挿入の成否を返す
