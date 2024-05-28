@@ -49,7 +49,7 @@
 <h1>教師情報登録</h1>
 <form name="teacherForm" action="insert" method="post" onsubmit="return validateForm()">
     <h2>教師番号</h2>
-    <input type="text" name="tid"><br>
+    <input type="number" name="tid"><br>
     <h2>名前</h2>
     <input type="text" name="name" />
     <h2>年齢</h2>

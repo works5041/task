@@ -110,15 +110,39 @@ public class TeacherDAO {
     }
 
     public boolean updateTeacher(Teacher teacher) {
+        StringBuilder sql = new StringBuilder("UPDATE teachers SET");
+        boolean firstField = true;
+        List<Object> parameters = new ArrayList<>();
+
+        if (teacher.getName() != null && !teacher.getName().isEmpty()) {
+            sql.append(firstField ? " name = ?" : ", name = ?");
+            parameters.add(teacher.getName());
+            firstField = false;
+        }
+        if (teacher.getAge() > 0) {
+            sql.append(firstField ? " age = ?" : ", age = ?");
+            parameters.add(teacher.getAge());
+            firstField = false;
+        }
+        if (teacher.getSex() != null && !teacher.getSex().isEmpty()) {
+            sql.append(firstField ? " sex = ?" : ", sex = ?");
+            parameters.add(teacher.getSex());
+            firstField = false;
+        }
+        if (teacher.getCourse() != null && !teacher.getCourse().isEmpty()) {
+            sql.append(firstField ? " course = ?" : ", course = ?");
+            parameters.add(teacher.getCourse());
+        }
+
+        sql.append(" WHERE id = ?");
+        parameters.add(teacher.getId());
+
         boolean rowUpdated = false;
-        try {
-            Connection connection = JdbcTest.getConnection();
-            PreparedStatement statement = connection.prepareStatement(UPDATE_TEACHERS_SQL);
-            statement.setString(1, teacher.getName());
-            statement.setInt(2, teacher.getAge());
-            statement.setString(3, teacher.getSex());
-            statement.setString(4, teacher.getCourse());
-            statement.setInt(5, teacher.getId());
+        try (Connection connection = JdbcTest.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql.toString())) {
+            for (int i = 0; i < parameters.size(); i++) {
+                statement.setObject(i + 1, parameters.get(i));
+            }
             rowUpdated = statement.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

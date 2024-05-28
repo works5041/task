@@ -5,23 +5,45 @@
 <head>
     <meta charset="UTF-8">
     <title>更新内容の確認</title>
+    <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin-top: 50px;
+            }
+            h1 {
+                color: red;
+            }
+            a {
+                display: inline-block;
+                margin: 10px 20px;
+                padding: 10px 20px;
+                color: #fff;
+                background-color: #007BFF;
+                text-decoration: none;
+                border-radius: 5px;
+            }
+            a:hover {
+                background-color: #0056b3;
+            }
+        </style>
 </head>
 <body>
     <h1>更新内容の確認</h1>
     <p>以下の情報で更新を実行しますか？</p>
-    <ul>
-        <li>教師番号: <%= new String(request.getParameter("id").getBytes("ISO-8859-1"), "UTF-8") %></li>
-        <li>名前: <%= new String(request.getParameter("name").getBytes("ISO-8859-1"), "UTF-8") %></li>
-        <li>年齢: <%= request.getParameter("age") %></li>
-        <li>性別: <%= new String(request.getParameter("sex").getBytes("ISO-8859-1"), "UTF-8") %></li>
-        <li>コース: <%= new String(request.getParameter("course").getBytes("ISO-8859-1"), "UTF-8") %></li>
-    </ul>
+
+        <p>教師番号: <%= request.getParameter("id") %></p>
+        <p>名前: <%= request.getParameter("name") %></p>
+        <p>年齢: <%= request.getParameter("age") %></p>
+        <p>性別: <%= request.getParameter("sex") %></p>
+        <p>コース: <%= request.getParameter("course") %></p>
+
     <form action="update" method="post" accept-charset="UTF-8"> <!-- 追加 -->
-        <input type="hidden" name="id" value="<%= new String(request.getParameter("id").getBytes("ISO-8859-1"), "UTF-8") %>">
-        <input type="hidden" name="name" value="<%= new String(request.getParameter("name").getBytes("ISO-8859-1"), "UTF-8") %>">
+        <input type="hidden" name="id" value="<%= request.getParameter("id") %>">
+        <input type="hidden" name="name" value="<%= request.getParameter("name") %>">
         <input type="hidden" name="age" value="<%= request.getParameter("age") %>">
-        <input type="hidden" name="sex" value="<%= new String(request.getParameter("sex").getBytes("ISO-8859-1"), "UTF-8") %>">
-        <input type="hidden" name="course" value="<%= new String(request.getParameter("course").getBytes("ISO-8859-1"), "UTF-8") %>">
+        <input type="hidden" name="sex" value="<%= request.getParameter("sex") %>">
+        <input type="hidden" name="course" value="<%= request.getParameter("course") %>">
         <input type="submit" value="はい、更新します">
     </form>
     <a href="javascript:history.back()">いいえ、キャンセルします</a>

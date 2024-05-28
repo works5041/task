@@ -28,13 +28,37 @@ public class TeacherServlet extends HttpServlet {
         teacherDAO = new TeacherDAO();
     }
 
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
-        doGet(request, response);
+
+        String idStr = request.getParameter("tid"); // 教師番号を取得
+        String name = request.getParameter("name");
+        String ageStr = request.getParameter("age");
+        String sex = request.getParameter("sex");
+        String course = request.getParameter("course");
+
+        int id = 0;
+        int age = 0;
+        try {
+            id = Integer.parseInt(idStr);
+            age = Integer.parseInt(ageStr);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Number format exception: {0}", e.getMessage());
+        }
+
+        // 教師情報の更新処理
+        Teacher teacher = new Teacher(id, name, age, sex, course);
+        teacherDAO.updateTeacher(teacher);
+        // 更新成功時の教師情報をリクエスト属性に設定
+        request.setAttribute("updatedTeacher", teacher);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
+        dispatcher.forward(request, response);
     }
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
         String action = request.getServletPath();
@@ -134,11 +158,28 @@ public class TeacherServlet extends HttpServlet {
     }
 
     private void insertTeacher(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        String tidStr = request.getParameter("tid"); // 教師番号を取得
+        LOGGER.log(Level.INFO, "Received teacher ID: {0}", tidStr); // デバッグ情報をログに出力
+
         String name = request.getParameter("name");
         int age = Integer.parseInt(request.getParameter("age"));
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
-        int tid = Integer.parseInt(request.getParameter("tid")); // 教師番号を取得
+
+        int tid = 0;
+        if (tidStr != null) {
+            try {
+                tid = Integer.parseInt(tidStr);
+            } catch (NumberFormatException e) {
+                LOGGER.log(Level.SEVERE, "Number format exception: {0}", e.getMessage());
+            }
+        } else {
+            // 教師番号がnullの場合はエラーメッセージを設定してエラーページにフォワードする
+            request.setAttribute("errorMessage", "教師番号が入力されていません。");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=null");
+            dispatcher.forward(request, response);
+            return; // メソッドを終了する
+        }
 
         Teacher newTeacher = new Teacher(tid, name, age, sex, course);
 
@@ -195,17 +236,34 @@ public class TeacherServlet extends HttpServlet {
         }
     }
 
-    private void updateTeacher(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
+    private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException, SQLException {
         int id = Integer.parseInt(request.getParameter("id"));
         String name = request.getParameter("name");
-        int age = Integer.parseInt(request.getParameter("age"));
+        String ageStr = request.getParameter("age");
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
-        Teacher teacher = new Teacher(id, name, age, sex, course);
+        Teacher existingTeacher = teacherDAO.selectTeacher(id);
 
-        teacherDAO.updateTeacher(teacher);
-        response.sendRedirect("list");
+        if (name != null && !name.isEmpty()) {
+            existingTeacher.setName(name);
+        }
+        if (ageStr != null && !ageStr.isEmpty()) {
+            existingTeacher.setAge(Integer.parseInt(ageStr));
+        }
+        if (sex != null && !sex.isEmpty()) {
+            existingTeacher.setSex(sex);
+        }
+        if (course != null && !course.isEmpty()) {
+            existingTeacher.setCourse(course);
+        }
+
+        teacherDAO.updateTeacher(existingTeacher);
+        // 更新成功時の教師情報をリクエスト属性に設定
+        request.setAttribute("updatedTeacher", existingTeacher);
+        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
+        dispatcher.forward(request, response);
     }
 
     private void deleteTeacher(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {

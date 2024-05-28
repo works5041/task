@@ -29,6 +29,11 @@
 </head>
 <body>
     <h1>操作が成功しました。</h1>
+                <p>教師番号: <%= request.getParameter("id") %></p>
+                <p>名前: <%= request.getParameter("name") %></p>
+                <p>年齢: <%= request.getParameter("age") %></p>
+                <p>性別: <%= request.getParameter("sex") %></p>
+                <p>コース: <%= request.getParameter("course") %></p>
     <a href="list">教師情報に戻る</a>
 </body>
 </html>

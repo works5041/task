@@ -42,7 +42,7 @@
         </select>
         <br><br>
         <input type="submit" value="更新" /> <input type="reset" value="リセット" />
-                </form>
-            </div>
-        </body>
-        </html>
+    </form>
+    </div>
+</body>
+</html>
