@@ -20,6 +20,18 @@ public class Teacher {
     public Teacher() {
     }
 
+    // toString() メソッドをオーバーライド
+    @Override
+    public String toString() {
+        return "Teacher{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", age=" + age +
+                ", sex='" + sex + '\'' +
+                ", course='" + course + '\'' +
+                '}';
+    }
+
     // Getters and Setters
     public int getId() {
         return id;

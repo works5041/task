@@ -10,7 +10,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.sql.SQLException;
@@ -33,31 +32,75 @@ public class TeacherServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
-        String idStr = request.getParameter("tid"); // 教師番号を取得
+        String idStr = request.getParameter("tid");
+        LOGGER.log(Level.INFO, "Received teacher ID: {0}", idStr);
+
+        if (idStr == null || idStr.isEmpty()) {
+            LOGGER.log(Level.SEVERE, "Teacher ID is missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Teacher ID is missing.");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Invalid Teacher ID format: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid Teacher ID format.");
+            return;
+        }
+
+        boolean exists;
+        try {
+            exists = teacherDAO.existsTeacher(id);
+            LOGGER.log(Level.INFO, "Teacher ID exists: {0}", exists);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error checking teacher ID existence: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error checking teacher ID existence.");
+            return;
+        }
+
         String name = request.getParameter("name");
         String ageStr = request.getParameter("age");
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
-        int id = 0;
-        int age = 0;
+        int age;
         try {
-            id = Integer.parseInt(idStr);
             age = Integer.parseInt(ageStr);
         } catch (NumberFormatException e) {
             LOGGER.log(Level.SEVERE, "Number format exception: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid number format for age.");
+            return;
         }
 
-        // 教師情報の更新処理
+        // doPost メソッド内の該当箇所
         Teacher teacher = new Teacher(id, name, age, sex, course);
-        teacherDAO.updateTeacher(teacher);
-        // 更新成功時の教師情報をリクエスト属性に設定
-        request.setAttribute("updatedTeacher", teacher);
-        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
-        dispatcher.forward(request, response);
+        try {
+            if (exists) {
+                boolean rowUpdated = teacherDAO.updateTeacher(teacher);
+                if (!rowUpdated) {
+                    LOGGER.log(Level.WARNING, "No teacher found with ID: {0}", id);
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "No teacher found with the given ID.");
+                    return;
+                }
+                response.sendRedirect("teacher_updatesuccess.jsp");
+            } else {
+                teacherDAO.insertTeacher(teacher);
+                // リクエスト属性に registeredTeacher を設定
+                request.setAttribute("registeredTeacher", teacher);
+                // デバッグ用ログ出力
+                LOGGER.log(Level.INFO, "Registered teacher: {0}", teacher);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
+                dispatcher.forward(request, response);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "SQL Exception occurred: {0}", e.getMessage());
+            throw new ServletException(e);
+        }
     }
 
-        protected void doGet(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
@@ -99,17 +142,19 @@ public class TeacherServlet extends HttpServlet {
         }
     }
 
-    private void checkTeacherId(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
-        LOGGER.log(Level.INFO, "Checking teacher ID...");
-        int tid = Integer.parseInt(request.getParameter("tid"));
-        LOGGER.log(Level.INFO, "Received teacher ID: {0}", tid);
-        boolean exists = teacherDAO.existsTeacher(tid);
-        LOGGER.log(Level.INFO, "Teacher ID exists: {0}", exists);
+    private void checkTeacherId(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException {
+        String idStr = request.getParameter("tid");
+        boolean exists = false;
+
+        if (idStr != null && !idStr.isEmpty()) {
+            int id = Integer.parseInt(idStr);
+            exists = teacherDAO.existsTeacher(id);
+        }
+
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        out.write("{\"exists\": " + exists + "}");
-        out.close();
+        response.getWriter().write("{\"exists\": " + exists + "}");
     }
 
     private void searchTeacher(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException, ServletException {
@@ -119,11 +164,17 @@ public class TeacherServlet extends HttpServlet {
 
         Integer id = idStr != null && !idStr.isEmpty() ? Integer.parseInt(idStr) : null;
 
-        if (name != null) {
-            name = URLDecoder.decode(name, StandardCharsets.UTF_8.toString());
-        }
-        if (course != null) {
-            course = URLDecoder.decode(course, StandardCharsets.UTF_8.toString());
+        try {
+            if (name != null) {
+                name = URLDecoder.decode(name, StandardCharsets.UTF_8.toString());
+            }
+            if (course != null) {
+                course = URLDecoder.decode(course, StandardCharsets.UTF_8.toString());
+            }
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.SEVERE, "URL decoding error: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid parameter encoding.");
+            return;
         }
 
         List<Teacher> listTeacher = teacherDAO.searchTeachers(id, name, course);
@@ -150,124 +201,125 @@ public class TeacherServlet extends HttpServlet {
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
+        String idStr = request.getParameter("id");
+        if (idStr == null || idStr.isEmpty()) {
+            throw new ServletException("IDパラメータが存在しません");
+        }
+
+        int id = 0;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            throw new ServletException("Invalid ID format.");
+        }
+
         Teacher existingTeacher = teacherDAO.selectTeacher(id);
+        if (existingTeacher == null) {
+            throw new ServletException("教師が存在しません: ID " + id);
+        }
+
         RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_update.jsp");
         request.setAttribute("teacher", existingTeacher);
         dispatcher.forward(request, response);
     }
 
-    private void insertTeacher(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        String tidStr = request.getParameter("tid"); // 教師番号を取得
-        LOGGER.log(Level.INFO, "Received teacher ID: {0}", tidStr); // デバッグ情報をログに出力
-
-        String name = request.getParameter("name");
-        int age = Integer.parseInt(request.getParameter("age"));
-        String sex = request.getParameter("sex");
-        String course = request.getParameter("course");
-
-        int tid = 0;
-        if (tidStr != null) {
-            try {
-                tid = Integer.parseInt(tidStr);
-            } catch (NumberFormatException e) {
-                LOGGER.log(Level.SEVERE, "Number format exception: {0}", e.getMessage());
-            }
-        } else {
-            // 教師番号がnullの場合はエラーメッセージを設定してエラーページにフォワードする
-            request.setAttribute("errorMessage", "教師番号が入力されていません。");
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=null");
-            dispatcher.forward(request, response);
-            return; // メソッドを終了する
-        }
-
-        Teacher newTeacher = new Teacher(tid, name, age, sex, course);
-
-        // 未入力項目がある場合はエラーメッセージを表示して登録画面に戻る
-        if (name.isEmpty() || sex.isEmpty() || course.isEmpty()) {
-            request.setAttribute("errorMessage", "全ての項目を入力してください");
-            request.setAttribute("teacher", newTeacher);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_register.jsp");
-            dispatcher.forward(request, response);
-            return; // メソッドを終了する
-        }
-
-        // 重複チェックを行う
-        boolean isDuplicate;
-        try {
-            isDuplicate = teacherDAO.existsTeacher(tid);
-        } catch (SQLException e) {
-            request.setAttribute("errorMessage", "教師番号のチェック中にエラーが発生しました。");
-            request.setAttribute("teacher", newTeacher);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=sql");
-            dispatcher.forward(request, response);
-            return; // メソッドを終了する
-        }
-
-        if (isDuplicate) {
-            // 重複した場合はエラーメッセージを表示してエラー画面にフォワードする
-            request.setAttribute("errorMessage", "教師番号が既に存在します。");
-            request.setAttribute("teacher", newTeacher);
-            RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=duplicate");
-            dispatcher.forward(request, response);
-        } else {
-            try {
-                // 重複しない場合は新しい教師を登録し、成功画面にフォワードする
-                teacherDAO.insertTeacher(newTeacher);
-
-                // 登録成功時の教師情報をリクエスト属性に設定
-                request.setAttribute("registeredTeacher", newTeacher);
-
-                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
-                dispatcher.forward(request, response);
-            } catch (SQLException e) {
-                // SQLエラーが発生した場合
-                request.setAttribute("errorMessage", "教師の挿入中にエラーが発生しました。");
-                request.setAttribute("teacher", newTeacher);
-                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=sql");
-                dispatcher.forward(request, response);
-            } catch (Exception e) {
-                // その他のエラーが発生した場合
-                request.setAttribute("errorMessage", "予期しないエラーが発生しました。");
-                request.setAttribute("teacher", newTeacher);
-                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registererror.jsp?error=general");
-                dispatcher.forward(request, response);
-            }
-        }
-    }
-
-    private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException, SQLException {
-        int id = Integer.parseInt(request.getParameter("id"));
+    private void insertTeacher(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException, ServletException {
+        String idStr = request.getParameter("tid");
         String name = request.getParameter("name");
         String ageStr = request.getParameter("age");
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
-        Teacher existingTeacher = teacherDAO.selectTeacher(id);
+        int id = Integer.parseInt(idStr);
+        int age = Integer.parseInt(ageStr);
 
-        if (name != null && !name.isEmpty()) {
-            existingTeacher.setName(name);
-        }
-        if (ageStr != null && !ageStr.isEmpty()) {
-            existingTeacher.setAge(Integer.parseInt(ageStr));
-        }
-        if (sex != null && !sex.isEmpty()) {
-            existingTeacher.setSex(sex);
-        }
-        if (course != null && !course.isEmpty()) {
-            existingTeacher.setCourse(course);
+        Teacher newTeacher = new Teacher(id, name, age, sex, course);
+        teacherDAO.insertTeacher(newTeacher);
+
+        request.setAttribute("registeredTeacher", newTeacher);
+        request.getRequestDispatcher("teacher_registersuccess.jsp").forward(request, response);
+    }
+
+    private void updateTeacher(HttpServletRequest request, HttpServletResponse response)
+            throws SQLException, IOException, ServletException {
+        String idStr = request.getParameter("tid");
+        LOGGER.log(Level.INFO, "Received teacher ID: {0}", idStr);
+
+        if (idStr == null || idStr.isEmpty()) {
+            LOGGER.log(Level.SEVERE, "Teacher ID is missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Teacher ID is missing.");
+            return;
         }
 
-        teacherDAO.updateTeacher(existingTeacher);
-        // 更新成功時の教師情報をリクエスト属性に設定
-        request.setAttribute("updatedTeacher", existingTeacher);
-        RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
-        dispatcher.forward(request, response);
+        int id;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Invalid Teacher ID format: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid Teacher ID format.");
+            return;
+        }
+
+        boolean exists;
+        try {
+            exists = teacherDAO.existsTeacher(id);
+            LOGGER.log(Level.INFO, "Teacher ID exists: {0}", exists);
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error checking teacher ID existence: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error checking teacher ID existence.");
+            return;
+        }
+
+        String name = request.getParameter("name");
+        String ageStr = request.getParameter("age");
+        String sex = request.getParameter("sex");
+        String course = request.getParameter("course");
+
+        int age;
+        try {
+            age = Integer.parseInt(ageStr);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Number format exception: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid number format for age.");
+            return;
+        }
+
+        Teacher teacher = new Teacher(id, name, age, sex, course);
+        try {
+            if (exists) {
+                boolean rowUpdated = teacherDAO.updateTeacher(teacher);
+                if (!rowUpdated) {
+                    LOGGER.log(Level.WARNING, "No teacher found with ID: {0}", id);
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND, "No teacher found with the given ID.");
+                    return;
+                }
+                response.sendRedirect("teacher_updatesuccess.jsp");
+            } else {
+                teacherDAO.insertTeacher(teacher);
+                response.sendRedirect("teacher_registersuccess.jsp");
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "SQL Exception occurred: {0}", e.getMessage());
+            throw new ServletException(e);
+        }
     }
 
     private void deleteTeacher(HttpServletRequest request, HttpServletResponse response) throws SQLException, IOException {
-        int id = Integer.parseInt(request.getParameter("id"));
+        String idStr = request.getParameter("id");
+        if (idStr == null || idStr.isEmpty()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID is missing.");
+            return;
+        }
+
+        int id;
+        try {
+            id = Integer.parseInt(idStr);
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid ID format.");
+            return;
+        }
+
         teacherDAO.deleteTeacher(id);
         response.sendRedirect("list");
     }

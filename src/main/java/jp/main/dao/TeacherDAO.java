@@ -2,10 +2,14 @@ package jp.main.dao;
 
 import jp.main.model.Teacher;
 import jp.main.base.JdbcTest;
+import jp.main.service.TeacherServlet;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import java.util.logging.Logger;
+import java.util.logging.Level;
 
 public class TeacherDAO {
     private static final String INSERT_TEACHERS_SQL = "INSERT INTO teachers (id, name, age, sex, course) VALUES (?, ?, ?, ?, ?)";
@@ -14,12 +18,18 @@ public class TeacherDAO {
     private static final String DELETE_TEACHERS_SQL = "DELETE FROM teachers WHERE id = ?";
     private static final String UPDATE_TEACHERS_SQL = "UPDATE teachers SET name = ?, age = ?, sex = ?, course = ? WHERE id = ?";
 
+    private static final Logger LOGGER = Logger.getLogger(TeacherServlet.class.getName());
+
     // 教師が存在するかどうかを確認するメソッド
     public boolean existsTeacher(int tid) throws SQLException {
         String sql = "SELECT COUNT(*) FROM teachers WHERE id = ?";
         try (Connection conn = JdbcTest.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, tid);
+
+            // クエリをログに出力
+            LOGGER.log(Level.INFO, "Executing SQL query: {0}", stmt.toString());
+
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt(1) > 0;
@@ -109,7 +119,7 @@ public class TeacherDAO {
         return rowDeleted;
     }
 
-    public boolean updateTeacher(Teacher teacher) {
+    public boolean updateTeacher(Teacher teacher) throws SQLException {
         StringBuilder sql = new StringBuilder("UPDATE teachers SET");
         boolean firstField = true;
         List<Object> parameters = new ArrayList<>();
@@ -144,8 +154,6 @@ public class TeacherDAO {
                 statement.setObject(i + 1, parameters.get(i));
             }
             rowUpdated = statement.executeUpdate() > 0;
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
         return rowUpdated;
     }
@@ -198,5 +206,23 @@ public class TeacherDAO {
             e.printStackTrace();
         }
         return teachers;
+    }
+
+    public Teacher selectTeacherById(int id) throws SQLException {
+        Teacher teacher = null;
+        String sql = "SELECT * FROM teachers WHERE id = ?";
+        try (Connection connection = JdbcTest.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setInt(1, id);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                String name = resultSet.getString("name");
+                int age = resultSet.getInt("age");
+                String sex = resultSet.getString("sex");
+                String course = resultSet.getString("course");
+                teacher = new Teacher(id, name, age, sex, course);
+            }
+        }
+        return teacher;
     }
 }
