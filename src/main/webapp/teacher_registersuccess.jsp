@@ -28,13 +28,13 @@
     </style>
 </head>
 <body>
-    <h1>操作が成功しました。</h1>
+    <h1>教師情報の登録に成功しました。</h1>
     <%-- リクエスト属性から教師情報を取得して表示 --%>
     <%
         jp.main.model.Teacher registeredTeacher = (jp.main.model.Teacher)request.getAttribute("registeredTeacher");
         if (registeredTeacher != null) { // null チェックを追加
     %>
-        <p>ID: <%= registeredTeacher.getId() %></p>
+        <p>教師番号: <%= registeredTeacher.getId() %></p>
         <p>名前: <%= registeredTeacher.getName() %></p>
         <p>年齢: <%= registeredTeacher.getAge() %></p>
         <p>性別: <%= registeredTeacher.getSex() %></p>

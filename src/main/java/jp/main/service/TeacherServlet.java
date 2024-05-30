@@ -65,6 +65,12 @@ public class TeacherServlet extends HttpServlet {
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
+        if (name == null || ageStr == null || sex == null || course == null) {
+            LOGGER.log(Level.SEVERE, "One or more parameters are missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "One or more parameters are missing.");
+            return;
+        }
+
         int age;
         try {
             age = Integer.parseInt(ageStr);
@@ -74,8 +80,9 @@ public class TeacherServlet extends HttpServlet {
             return;
         }
 
-        // doPost メソッド内の該当箇所
         Teacher teacher = new Teacher(id, name, age, sex, course);
+        LOGGER.log(Level.INFO, "Teacher object created: {0}", teacher);
+
         try {
             if (exists) {
                 boolean rowUpdated = teacherDAO.updateTeacher(teacher);
@@ -84,18 +91,22 @@ public class TeacherServlet extends HttpServlet {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "No teacher found with the given ID.");
                     return;
                 }
-                response.sendRedirect("teacher_updatesuccess.jsp");
+                request.setAttribute("teacher", teacher);
+                LOGGER.log(Level.INFO, "Teacher object set as request attribute: {0}", teacher);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
+                dispatcher.forward(request, response);
             } else {
                 teacherDAO.insertTeacher(teacher);
-                // リクエスト属性に registeredTeacher を設定
                 request.setAttribute("registeredTeacher", teacher);
-                // デバッグ用ログ出力
                 LOGGER.log(Level.INFO, "Registered teacher: {0}", teacher);
                 RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
                 dispatcher.forward(request, response);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "SQL Exception occurred: {0}", e.getMessage());
+            throw new ServletException(e);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Exception occurred: {0}", e.getMessage());
             throw new ServletException(e);
         }
     }
@@ -201,12 +212,12 @@ public class TeacherServlet extends HttpServlet {
     }
 
     private void showEditForm(HttpServletRequest request, HttpServletResponse response) throws SQLException, ServletException, IOException {
-        String idStr = request.getParameter("id");
+        String idStr = request.getParameter("tid");
         if (idStr == null || idStr.isEmpty()) {
             throw new ServletException("IDパラメータが存在しません");
         }
 
-        int id = 0;
+        int id;
         try {
             id = Integer.parseInt(idStr);
         } catch (NumberFormatException e) {
@@ -231,8 +242,16 @@ public class TeacherServlet extends HttpServlet {
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
-        int id = Integer.parseInt(idStr);
-        int age = Integer.parseInt(ageStr);
+        int id;
+        int age;
+        try {
+            id = Integer.parseInt(idStr);
+            age = Integer.parseInt(ageStr);
+        } catch (NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Invalid ID or age format: {0}", e.getMessage());
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid ID or age format.");
+            return;
+        }
 
         Teacher newTeacher = new Teacher(id, name, age, sex, course);
         teacherDAO.insertTeacher(newTeacher);
@@ -276,6 +295,12 @@ public class TeacherServlet extends HttpServlet {
         String sex = request.getParameter("sex");
         String course = request.getParameter("course");
 
+        if (name == null || ageStr == null || sex == null || course == null) {
+            LOGGER.log(Level.SEVERE, "One or more parameters are missing.");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "One or more parameters are missing.");
+            return;
+        }
+
         int age;
         try {
             age = Integer.parseInt(ageStr);
@@ -286,6 +311,8 @@ public class TeacherServlet extends HttpServlet {
         }
 
         Teacher teacher = new Teacher(id, name, age, sex, course);
+        LOGGER.log(Level.INFO, "Updated teacher object: {0}", teacher); // 追加: 更新されたTeacherオブジェクトをログに記録
+
         try {
             if (exists) {
                 boolean rowUpdated = teacherDAO.updateTeacher(teacher);
@@ -294,10 +321,16 @@ public class TeacherServlet extends HttpServlet {
                     response.sendError(HttpServletResponse.SC_NOT_FOUND, "No teacher found with the given ID.");
                     return;
                 }
-                response.sendRedirect("teacher_updatesuccess.jsp");
+                request.setAttribute("teacher", teacher);
+                LOGGER.log(Level.INFO, "Updated teacher object set as request attribute: {0}", teacher); // 追加: リクエスト属性に設定されたTeacherオブジェクトをログに記録
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_updatesuccess.jsp");
+                dispatcher.forward(request, response);
             } else {
                 teacherDAO.insertTeacher(teacher);
-                response.sendRedirect("teacher_registersuccess.jsp");
+                request.setAttribute("registeredTeacher", teacher);
+                LOGGER.log(Level.INFO, "Registered teacher: {0}", teacher);
+                RequestDispatcher dispatcher = request.getRequestDispatcher("teacher_registersuccess.jsp");
+                dispatcher.forward(request, response);
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "SQL Exception occurred: {0}", e.getMessage());

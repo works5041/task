@@ -114,7 +114,7 @@
         <td><%= teacher.getSex() %></td>
         <td><%= teacher.getCourse() %></td>
         <td>
-            <a href="edit?id=<%= teacher.getId() %>">更新</a>
+            <a href="teacher_update.jsp?tid=<%= teacher.getId() %>">更新</a>
         </td>
     </tr>
     <%
