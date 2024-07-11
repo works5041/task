@@ -28,9 +28,19 @@
     <servlet-class>jp.main.service.TeacherServlet</servlet-class>
   </servlet>
 
+  <servlet>
+    <servlet-name>CsvExportServlet</servlet-name>
+    <servlet-class>jp.main.service.CsvExportServlet</servlet-class>
+  </servlet>
+
   <servlet-mapping>
     <servlet-name>TeacherServlet</servlet-name>
     <url-pattern>/teacher/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>CsvExportServlet</servlet-name>
+    <url-pattern>/csvExport</url-pattern>
   </servlet-mapping>
 
   <welcome-file-list>

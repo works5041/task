@@ -9,7 +9,7 @@
     <style type="text/css">
         /* CSS 省略 */
    </style>
-       <script>
+   <script>
        function validateForm() {
            var teacherId = document.getElementsByName('id')[0].value;
            if (teacherId.length > 5 || isNaN(teacherId)) {
@@ -18,12 +18,12 @@
            }
            return true;
        }
-       </script>
-   </head>
-   <body>
-   <a href="index.jsp">トップページに戻る</a>
-   <h1>教師情報</h1>
-   <a href="csvExport">CSVエクスポート</a>
+   </script>
+</head>
+<body>
+<a href="index.jsp">トップページに戻る</a>
+<h1>教師情報</h1>
+<a href="csvExport">CSVエクスポート</a>
 <style type="text/css">
     body {
         font-family: Arial, sans-serif;
