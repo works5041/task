@@ -8,21 +8,22 @@
     <title>教師情報</title>
     <style type="text/css">
         /* CSS 省略 */
-    </style>
-    <script>
-    function validateForm() {
-        var teacherId = document.getElementsByName('id')[0].value;
-        if (teacherId.length > 5 || isNaN(teacherId)) {
-            alert("教師番号は最大５桁の整数で入力してください。");
-            return false;
-        }
-        return true;
-    }
-    </script>
-</head>
-<body>
-<a href="index.jsp">トップページに戻る</a>
-<h1>教師情報</h1>
+   </style>
+       <script>
+       function validateForm() {
+           var teacherId = document.getElementsByName('id')[0].value;
+           if (teacherId.length > 5 || isNaN(teacherId)) {
+               alert("教師番号は最大５桁の整数で入力してください。");
+               return false;
+           }
+           return true;
+       }
+       </script>
+   </head>
+   <body>
+   <a href="index.jsp">トップページに戻る</a>
+   <h1>教師情報</h1>
+   <a href="csvExport">CSVエクスポート</a>
 <style type="text/css">
     body {
         font-family: Arial, sans-serif;
